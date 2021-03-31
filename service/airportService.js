@@ -5,30 +5,30 @@ const { removeUndefined } = require("@utopia-airlines-wss/common/util");
 
 const airportService = {
   async findAirportById(iataId) {
-    const airport = await Airport.findByPk(
-      iataId.toUpperCase(),
-      { include: ["departureRoutes", "arrivalRoutes" ] }
-    );
-    if(!airport) throw new NotFoundError("cannot find airport");
+    const airport = await Airport.findByPk(iataId.toUpperCase(), {
+      include: ["departureRoutes", "arrivalRoutes"],
+    });
+    if (!airport) throw new NotFoundError("cannot find airport");
     return airport;
   },
-  async findAllAirports({ query } = {}) {
-    return Airport.findAll({
-      where: removeUndefined({
-        [Op.or]: query && [
-          {
-            iataId: {
-              [Op.substring]: query,
-            },
-          },
-          {
-            name: {
-              [Op.substring]: query,
-            },
-          },
-        ],
-      }),
-      include: ["departureRoutes", "arrivalRoutes" ],
+  async findAllAirports({ offset = 0, limit = 20, airport }) {
+    console.log(offset, limit, airport);
+    let query= null;
+    if(airport){
+      query = {
+        [Op.or]:   [
+          { iataId: { [Op.substring]: airport } },
+          { name: { [Op.substring]: airport } },
+          { city: { [Op.substring]: airport } },
+          { country: { [Op.substring]: airport } },
+        ]
+      };
+    }
+    return Airport.findAndCountAll({
+      limit: +limit,
+      offset: +offset,
+      where: query,
+      include: ["departureRoutes", "arrivalRoutes"],
     });
   },
 };
